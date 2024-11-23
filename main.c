@@ -5,64 +5,55 @@
 #include <time.h>
 #include <math.h>
 #include "wordle.h"
+#include "player.h"
 int main() {
-    char words[MAX_WORDS][WORD_LENGTH + 1]; 
-    int word_count;
-    const char *filename = "wordList.txt";
-    char target[WORD_LENGTH + 1]; 
-    char input[WORD_LENGTH + 1];
-    char result[WORD_LENGTH + 1];
-    int attempts = 0;
+	
+	
+	loadWordList("wordlist.txt");
+    int numWordsToTest = 1000;
+    testAI(numWordsToTest);//测试AI
+	printf("Wordle游戏开始!\n");
+	printf("1. 人类玩家\n2. AI玩家\n");
+	int cho;
+	scanf("%d", &cho);
 
-    if (!load_commands(filename, words, &word_count)) {
-        return 1; 
-    }
-    srand(time(NULL)); 
-    if (!read_random_word(filename, target)) {
-        return 1; 
-    }
+	char target[WORD_LENGTH + 1];
+	printf("1.手动答案？\n2.自动答案？\n");
+	int tar_Cho;
+	scanf("%d", &tar_Cho);
 
-    printf("猜单词游戏开始！\n");
-    printf("请选择自动进行还是手动游玩\n");
-    printf("1. 自动\n");
-    printf("2. 手动\n");
-    int xuanze;
-    scanf("%d", &xuanze);
-    while ((getchar()) != '\n' && getchar() != EOF); 
+	if (tar_Cho == 1) {
+		printf("请输入设置答案: ");
+		scanf("%s", target);
+		int valid = 0;
+		for (int i = 12540; i < wordcnt; i++) {
+			if (strcmp(wordList[i], target) == 0) {
+				valid = 1;
+				break;
+			}
+		}
+		if (!valid) {
+			printf("该答案不存在\n");
+			return 1;
+		}
+	} else {
+		srand(time(NULL));
+		int randomIndex = 12540 + rand() % 2316;
+		strcpy(target, wordList[randomIndex]);
+		printf("随机答案完成\n");
+	}
 
-    if (xuanze != 2) {
-        printf("自动进行在本part1中不需要，请开启part2获得全部游戏体验\n");
-        return 0;
-    }
+	if (cho == 1) {
+		printf("人类玩家开始\n");
+		humanPlay(target);
+	} else if (cho == 2) {
+		printf("AI玩家开始\n");
+		AIPlay(target);
+	} else {
+		printf("无效输入\n");
+		return 1;
+	}
 
-    while (1) {
-        printf("尝试次数: %d\n", attempts + 1);
-        printf("请输入一个5个字母的单词:\n");
-        fgets(input, sizeof(input), stdin);
-        input[strcspn(input, "\n")] = '\0';
-        int c;
-        while ((c = getchar()) != '\n' && c != EOF);
-
-        if (is_word_in_list(input, words, word_count) == false) {
-            printf("不是有效的单词\n");
-            continue;
-        }
-
-        check_word(target, input, result); 
-        printf("结果: %s\n", result); 
-
-        if (strcmp(target, input) == 0) {
-            printf("猜对了！\n");
-            printf("分数为: %d\n", MAX_ATTEMPTS - attempts);
-            break;
-        }
-
-        attempts++;
-        if (attempts >= MAX_ATTEMPTS) {
-            printf("达到最大尝试次数，正确单词是: %s 分数为0\n", target);
-            break;
-        }
-    }
-
-    return 0;
+	return 0;
 }
+///usr/bin/gcc -o ./main /Users/lijinshuo/Downloads/projectcopy/main.c /Users/lijinshuo/Downloads/projectcopy/wordle.c  /Users/lijinshuo/Downloads/projectcopy/player.c  && ./main

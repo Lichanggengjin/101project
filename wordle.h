@@ -1,12 +1,15 @@
 #ifndef WORDLE_H
 #define WORDLE_H
+#include <stdbool.h>
 #define WORD_LENGTH 5
 #define MAX_WORDS 14855
-#define ANSWER_COUNT 2309   
-#define MAX_ATTEMPTS 10      
-#define MAX_LINE_LENGTH 10
-void check_word(const char *target, const char *input, char *result) ;
-bool read_random_word(const char *filename, char *random_word) ;
-bool is_word_in_list(const char *word, char words[][WORD_LENGTH + 1], int word_count) ;
-bool load_commands(const char *filename, char words[][WORD_LENGTH + 1], int *word_count) ;
+#define MAX_SOLUTIONS 2315
+#define MAX_ATTEMPTS 10
+char wordList[MAX_WORDS][WORD_LENGTH + 1];
+int wordcnt = 0;
+bool firstGuess = true;
+void loadWordList(const char* filename);
+void check_word(const char* target, const char* input, char* res) ;
+void testAI(int numWords);
+double calculate_average_attempts(int total_attempts, int numWords);
 #endif 

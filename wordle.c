@@ -5,101 +5,85 @@
 #include <time.h>
 #include <math.h>
 #include "wordle.h"
-void check_word(const char *target, const char *input, char *result) {
-    bool used[WORD_LENGTH] = {false};  
-    memset(result, 'B', WORD_LENGTH); 
-    for (int i = 0; i < WORD_LENGTH; i++) {
-        if (input[i] == target[i]) {
-            result[i] = 'G'; 
-            used[i] = true;  
-        }
-    }
-    for (int i = 0; i < WORD_LENGTH; i++) {
-        if (result[i] == 'G') continue; 
-        for (int j = 0; j < WORD_LENGTH; j++) {
-            if (!used[j] && input[i] == target[j]) {
-                result[i] = 'Y'; 
-                used[j] = true;  
+void check_word(const char* target, const char* input, char* res) {
+	char tempTarget[WORD_LENGTH + 1];
+	strcpy(tempTarget, target);
+	for (int i = 0; i < WORD_LENGTH; i++) {
+		if (input[i] == target[i]) {
+			res[i] = 'G';
+			tempTarget[i] = '*';
+		} else {
+			res[i] = 'B';
+		}
+	}
+	for (int i = 0; i < WORD_LENGTH; i++) {
+		if (res[i] == 'B') {
+			for (int j = 0; j < WORD_LENGTH; j++) {
+				if (input[i] == tempTarget[j]) {
+					res[i] = 'Y';
+					tempTarget[j] = '*';
+					break;
+				}
+			}
+		}
+	}
+	res[WORD_LENGTH] = '\0';
+}
+void loadWordList(const char* filename) {
+	FILE* file = fopen(filename, "r");
+	if (!file) {
+		printf("打不开: %s\n", filename);
+		exit(1);
+	}
+
+	while (wordcnt < MAX_WORDS &&
+	        fscanf(file, "%s", wordList[wordcnt]) == 1) {
+		if (strlen(wordList[wordcnt]) == WORD_LENGTH) {
+			wordcnt++;
+		}
+	}
+	fclose(file);
+	printf("文件中有%d个单词 \n", wordcnt);
+}
+double calculate_average_attempts(int total_attempts, int numWords) {
+    return (double)total_attempts / numWords;
+}
+void testAI(int numWords) {
+    clock_t start_time = clock(); 
+
+    int total_attempts = 0; 
+
+    for (int i = 13540; i < numWords + 13540 && i < wordcnt; i++) { 
+        char target[WORD_LENGTH + 1];
+        strcpy(target, wordList[i]); 
+
+        int att = 0;
+        char res[WORD_LENGTH + 1];
+        char *guess;
+        firstGuess = true; 
+
+        while (att < MAX_ATTEMPTS) {
+            guess = player_AI(target);
+            check_word(target, guess, res);
+
+            if (strcmp(res, "GGGGG") == 0) {
+                total_attempts += (att + 1); // 累加猜测次数
                 break;
             }
+            att++;
         }
-    }
-}
 
-bool read_random_word(const char *filename, char *random_word) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        perror("无法打开文件");
-        return false;
-    }
-
-    int line_count = 0;
-    char line[MAX_LINE_LENGTH];
-    while (fgets(line, sizeof(line), file) != NULL) {
-        // 去除换行符和空白字符
-        line[strcspn(line, "\n")] = '\0';
-        if (strlen(line) > 0) {
-            line_count++;
+        if (att == MAX_ATTEMPTS) {
+            total_attempts += MAX_ATTEMPTS; // 累加最大猜测次数
+			printf("AI无法猜测: %s\n", target);
+			
         }
     }
 
-    if (line_count < ANSWER_COUNT) {
-        printf("文件中的行数少于 %d 行\n", ANSWER_COUNT);
-        fclose(file);
-        return false;
-    }
+    double average_attempts = calculate_average_attempts(total_attempts, numWords);
+    printf("平均猜测次数: %.2f\n", average_attempts);
 
-    srand(time(NULL)); 
-    int random_line_number = line_count - ANSWER_COUNT + (rand() % ANSWER_COUNT);
-    printf("文件总行数: %d\n", line_count);
-    printf("随机选择的行号: %d\n", random_line_number);
-
-    fseek(file, 0, SEEK_SET);
-    int current_line = 0;
-    while (fgets(line, sizeof(line), file) != NULL) {
-        // 去除换行符和空白字符
-        line[strcspn(line, "\n")] = '\0';
-        if (strlen(line) == 0) {
-            continue;
-        }
-        if (current_line == random_line_number) {
-            // 去除所有空白字符
-            int j = 0;
-            for (int i = 0; i < strlen(line); i++) {
-                if (line[i] != ' ' && line[i] != '\t') {
-                    random_word[j++] = line[i];
-                }
-            }
-            random_word[j] = '\0'; 
-
-            break;
-        }
-        current_line++;
-    }
-    fclose(file);
-    printf("读取的单词: '%s'\n", random_word);
-
-    return true;
-}
-
-bool is_word_in_list(const char *word, char words[][WORD_LENGTH + 1], int word_count) {
-    for (int i = 0; i < word_count; i++) {
-        if (strncmp(word, words[i], WORD_LENGTH) == 0) {
-            return true;
-        }
-    }
-    return false;
-}
-bool load_commands(const char *filename, char words[][WORD_LENGTH + 1], int *word_count) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        perror("无法打开文件");
-        return false;
-    }
-    *word_count = 0;
-    while (fscanf(file, "%5s", words[*word_count]) == 1) {
-        (*word_count)++;
-    }
-    fclose(file);
-    return true;
+    clock_t end_time = clock();
+    double elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    printf("总时间: %.2f 秒\n", elapsed_time);
 }

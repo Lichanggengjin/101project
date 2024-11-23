@@ -1,11 +1,10 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 #include "wordle.h"
-typedef char*(*Player)(const char lastResult[WORD_LENGTH+1]);
-char *player_AI(const char lastResult[WORD_LENGTH + 1]);
-double calculate_variance(double arr[], int size);
-void AIdelete(char result[], char words[MAX_WORDS][WORD_LENGTH + 1], char input[], int *wordcount);
-void calculate_letter_frequencies(char words[MAX_WORDS][WORD_LENGTH + 1], double frequency[26]) ;
-char AIdecision(char wordList[MAX_WORDS][WORD_LENGTH + 1], double frequency[26], char *guess);
-
+char* player_AI(const char* target);
+void humanPlay(const char* target);
+void AIPlay(const char* target);
+double calculateEntropy(const char* word, char possibleAnswers[][WORD_LENGTH + 1], int answercnt);
+void getPattern(const char* guess, const char* target, char* pattern);
+char* getBestGuess(char wordList[][WORD_LENGTH + 1], int wordcnt,char possibleAnswers[][WORD_LENGTH + 1], int answercnt);
 #endif
